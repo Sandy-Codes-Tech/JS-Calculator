@@ -63,12 +63,12 @@ function deleteLast() {
         display.value = currentValue.slice(0, -1);
     }
 }
-
 function calculate() {
     console.log('Equals button pressed.');
 
     alert('Equals button was clicked');
 }
+
 
 document.addEventListener('keydown', function(event) {
     console.log('Key pressed', event.key);
@@ -97,12 +97,13 @@ document.addEventListener('keydown', function(event) {
     }
 })
 
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Calculator loaded successfully');
     console.log('Display element', display);
 
     if (display) {
-        console.log('Current display value: ', display.value);
+        console.log('Current display value: ' display.value);
     } else {
         console.log('Display element not found');
     }
