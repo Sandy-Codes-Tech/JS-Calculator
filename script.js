@@ -8,8 +8,31 @@ function isOperator(char) {
     return ['+', '-', '*', '/'].includes(char);
 }
 
-function getlastChar() {
+function getLastChar() {
     return display.value.slice(-1);
+}
+
+function safeEval(expression) {
+    try {
+        let jsExpression = expression
+            .replace(/x/g, '*')
+            .replace(/÷/g, '/');
+
+        if (!/^[0-9+\-*/.() ]+$/.test(jsExpression)){
+            throw new Error('Invalid characters in expression');
+        }
+
+        const result = Function(' "use strict"; return (' + jsExpression + ')')();
+
+        if (!isFinite(result)) {
+            throw new Error('Invalid calculation result');
+        }
+
+        return result;
+    } catch (error) {
+        console.error('Calcualtion error:', error);
+        return 'Error';
+    }
 }
 
 function appendToDisplay(value) {
@@ -23,44 +46,45 @@ function appendToDisplay(value) {
         return;
     }
 
-if (justCalculated && isOperator(value)) {
-    display.value = currentValue + value;
-    justCalculated = false;
-    return;
-}
-
-// Handles operators
-    if (isOperator(value)) {
-        // Dont allow operator as first char exeption for minus)
-        if (currentValue === '0' && value !== '-') {
-            return; //Do nothing
-        }
-
-        // if the last character is an operator, replace it
-    if (isOperator(getlastChar()) && isOperator(value)) {
-        display.value = currentValue.slice(0, -1) + value;
-        } else {
+    if (justCalculated && isOperator(value)) {
         display.value = currentValue + value;
+        justCalculated = false;
+        return;
+    }
+
+    // Handles operators
+    if (isOperator(value)){
+        // Dont allow operator as first char (exception for minus)
+        if (currentValue === '0' && value !== '-'){
+            return; // Do nothing
         }
 
-    } else if (!isNaN(value)) {
-
-        if (currentValue === '0'){
-            display.value = value; 
+        // If the last character is already an operator, replace it
+        if (isOperator(getLastChar())) {
+            display.value = currentValue.slice(0, -1) + value;
         } else {
             display.value = currentValue + value;
         }
-    
-    }else if (value === '.') {
+
+    } else if (!isNaN(value)){
+
+        if (currentValue === '0'){
+            display.value = value;
+        } else {
+            display.value = currentValue + value;
+        }
+
+    } else if (value === '.' ) {
+
         if (currentValue === '0') {
             display.value = currentValue + value;
         } else {
-            // Get the last number in the display after last operator
-            let parts = currentValue.split('/[\+\-\*/]');
+            // Get the last number in the display (after last operator)
+            let parts = currentValue.split('/[+\-*/');
             let lastNumber = parts[parts.length - 1];
 
-            // Only add the decimal if the number doesn't already have one
-            if (!lastNumber.includes('.')) {
+            // Only add decimal if number doesn't already have one
+            if (!lastNumber.includes('.')){
                 display.value = currentValue + value;
             }
         }
@@ -99,12 +123,42 @@ function deleteLast() {
         display.value = currentValue.slice(0, -1);
     }
 }
+
 function calculate() {
-    console.log('Equals button pressed.');
+    let expression = display.value;
 
-    alert('Equals button was clicked');
+    // Dont calc if display is 0 or empty
+    if (expression === '0' || expression === ''){
+        return;
+    }
+
+    // Dont calc if expression ends with operator
+    if (isOperator(getLastChar())){
+        return;
+    }
+
+    let result = safeEval(expression);
+
+    if (result === 'Error') {
+        display.value = 'Error';
+        setTimeout(() => {
+            clearDisplay()
+        }, 2000);
+    } else {
+        if (Number.isInteger(result)) {
+            display.value = result.toString();
+        } else {
+            display.value = parseFloat(result.toFixed(10)).toString();
+        }
+
+        justCalculated = true;
+    }
+
+    display.style.backgroundColor = '#e8f5e8';
+    setTimeout(() => {
+        display.style.backgroundColor = '';
+    }, 300);
 }
-
 
 document.addEventListener('keydown', function(event) {
     console.log('Key pressed', event.key);
@@ -133,11 +187,10 @@ document.addEventListener('keydown', function(event) {
     }
 })
 
-
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Calculator loaded successfully');
     console.log('Display element', display);
-    
+
     if (display) {
         console.log('Current display value: ', display.value);
     } else {
